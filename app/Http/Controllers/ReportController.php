@@ -18,8 +18,7 @@ class ReportController extends Controller
 
         $userFilter = $request->get('user_filter', '');
         if ($userFilter) {
-            $userQuery = "SELECT * FROM users WHERE name LIKE '%" . $userFilter . "%'";
-            $filteredUsers = DB::select($userQuery);
+            $filteredUsers = User::where('name', 'like', "%{$userFilter}%")->get();
         }
 
         $tasks = Task::all();

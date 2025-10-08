@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\TaskPriority;
+use App\Enums\TaskStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -30,6 +32,8 @@ class Task extends Model
         'due_date' => 'datetime',
         'estimated_hours' => 'decimal:2',
         'actual_hours' => 'decimal:2',
+        'status' => TaskStatus::class,
+        'priority' => TaskPriority::class,
     ];
 
     public function user(): BelongsTo
