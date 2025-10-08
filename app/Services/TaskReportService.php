@@ -20,12 +20,19 @@ class TaskReportService
         $startTime = microtime(true);
         $startMemory = memory_get_usage(true);
 
+        // Enable query logging to track database queries
+        \DB::enableQueryLog();
+
         // Get data from repository
         $tasks = $this->repository->getTasksInDateRange($startDate, $endDate, $userFilter);
         $categoryStats = $this->repository->getCategoryStatistics($startDate, $endDate);
         $userStats = $this->repository->getUserStatistics($startDate, $endDate);
         $priorityDistribution = $this->repository->getPriorityDistribution($startDate, $endDate);
         $statusDistribution = $this->repository->getStatusDistribution($startDate, $endDate);
+
+        // Get query count
+        $queryCount = count(\DB::getQueryLog());
+        \DB::disableQueryLog();
 
         // Format tasks for response
         $report = $this->formatTasksForResponse(
@@ -47,6 +54,17 @@ class TaskReportService
                 'execution_time_ms' => $executionTime,
                 'memory_used_mb' => $memoryUsed,
                 'task_count' => count($report),
+                'query_count' => $queryCount,
+                'date_range' => "{$startDate->format('Y-m-d')} to {$endDate->format('Y-m-d')}",
+            ]);
+        }
+
+        // Warn if query count exceeds threshold
+        if ($queryCount > 100) {
+            \Log::warning('High query count detected', [
+                'query_count' => $queryCount,
+                'task_count' => count($report),
+                'execution_time_ms' => $executionTime,
                 'date_range' => "{$startDate->format('Y-m-d')} to {$endDate->format('Y-m-d')}",
             ]);
         }
@@ -64,7 +82,7 @@ class TaskReportService
             'execution_time_ms' => $executionTime,
             'memory_used_mb' => $memoryUsed,
             'peak_memory_mb' => $peakMemory,
-            'query_count' => '<100 (optimized)',
+            'query_count' => $queryCount,
         ];
     }
 

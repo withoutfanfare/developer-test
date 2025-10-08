@@ -58,7 +58,7 @@ class TaskRepository implements TaskRepositoryInterface
         $stats = Task::select('user_id')
             ->selectRaw('COUNT(*) as total_tasks')
             ->selectRaw('SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as completed_tasks', [TaskStatus::COMPLETED->value])
-            ->whereBetween('created_at', [$start, $end])
+            ->inDateRange($start, $end)
             ->groupBy('user_id')
             ->get()
             ->keyBy('user_id')
@@ -85,7 +85,7 @@ class TaskRepository implements TaskRepositoryInterface
     {
         return Task::select('status')
             ->selectRaw('COUNT(*) as count')
-            ->whereBetween('created_at', [$start, $end])
+            ->inDateRange($start, $end)
             ->groupBy('status')
             ->pluck('count', 'status')
             ->all();
@@ -98,7 +98,7 @@ class TaskRepository implements TaskRepositoryInterface
     {
         return Task::select('priority')
             ->selectRaw('COUNT(*) as count')
-            ->whereBetween('created_at', [$start, $end])
+            ->inDateRange($start, $end)
             ->groupBy('priority')
             ->pluck('count', 'priority')
             ->all();
