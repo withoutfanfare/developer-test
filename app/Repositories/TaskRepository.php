@@ -15,7 +15,7 @@ class TaskRepository implements TaskRepositoryInterface
     public function getTasksInDateRange(Carbon $start, Carbon $end, ?string $userFilter): Collection
     {
         $query = Task::with(['user', 'assignedTo', 'comments'])
-            ->whereBetween('created_at', [$start, $end]);
+            ->inDateRange($start, $end);
 
         if ($userFilter) {
             $query->whereHas('user', function ($q) use ($userFilter) {
@@ -34,7 +34,7 @@ class TaskRepository implements TaskRepositoryInterface
         $stats = Task::select('category')
             ->selectRaw('COUNT(*) as count')
             ->selectRaw('AVG(actual_hours) as avg_hours')
-            ->whereBetween('created_at', [$start, $end])
+            ->inDateRange($start, $end)
             ->whereNotNull('category')
             ->groupBy('category')
             ->get()
