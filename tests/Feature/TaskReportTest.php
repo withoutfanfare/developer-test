@@ -219,7 +219,10 @@ class TaskReportTest extends TestCase
 
         DB::enableQueryLog();
 
-        $response = $this->getJson('/api/v1/reports/tasks?start_date=' . now()->subMonths(2)->format('Y-m-d'));
+        $startDate = now()->subMonths(2)->format('Y-m-d');
+        $endDate = now()->format('Y-m-d');
+
+        $response = $this->getJson("/api/v1/reports/tasks?start_date={$startDate}&end_date={$endDate}");
 
         $queryLog = DB::getQueryLog();
 
@@ -249,5 +252,92 @@ class TaskReportTest extends TestCase
         // Status filtering (used in aggregations) should be fast with index
         $this->assertLessThan(1000, $executionTime,
             "Status-based queries should be fast with index, took {$executionTime}ms");
+    }
+
+    /**
+     * Test: Empty result set (date range with no tasks)
+     */
+    public function test_empty_result_set_with_no_matching_tasks(): void
+    {
+        // Create tasks in the past
+        Task::factory()->count(10)->create(['created_at' => now()->subYears(5)]);
+
+        // Request tasks from last week (should be empty)
+        $startDate = now()->subWeek()->format('Y-m-d');
+        $endDate = now()->format('Y-m-d');
+
+        $response = $this->getJson("/api/v1/reports/tasks?start_date={$startDate}&end_date={$endDate}");
+
+        $response->assertSuccessful();
+
+        $data = $response->json();
+        $this->assertEquals(0, $data['total_tasks']);
+        $this->assertIsArray($data['report']);
+        $this->assertEmpty($data['report']);
+    }
+
+    /**
+     * Test: Very large date ranges (multi-year spans)
+     */
+    public function test_large_date_range_multi_year_span(): void
+    {
+        Task::factory()->count(50)->create();
+
+        $startDate = now()->subYears(10)->format('Y-m-d');
+        $endDate = now()->format('Y-m-d');
+
+        $response = $this->getJson("/api/v1/reports/tasks?start_date={$startDate}&end_date={$endDate}");
+
+        $response->assertSuccessful();
+        $this->assertArrayHasKey('report', $response->json());
+        $this->assertArrayHasKey('total_tasks', $response->json());
+    }
+
+    /**
+     * Test: Special characters in user_filter (LIKE metacharacters)
+     */
+    public function test_special_characters_in_user_filter(): void
+    {
+        $user1 = User::factory()->create(['name' => 'John_Doe']);
+        $user2 = User::factory()->create(['name' => 'Jane%Smith']);
+
+        Task::factory()->create(['user_id' => $user1->id]);
+        Task::factory()->create(['user_id' => $user2->id]);
+
+        // Test underscore (SQL LIKE wildcard)
+        $response = $this->getJson('/api/v1/reports/tasks?user_filter=John_');
+        $response->assertSuccessful();
+
+        // Test percent sign (SQL LIKE wildcard)
+        $response2 = $this->getJson('/api/v1/reports/tasks?user_filter=Jane%');
+        $response2->assertSuccessful();
+    }
+
+    /**
+     * Test: Concurrent requests to uncached endpoint
+     */
+    public function test_concurrent_requests_handle_correctly(): void
+    {
+        Task::factory()->count(100)->create();
+
+        // Make multiple concurrent requests
+        $response1 = $this->getJson('/api/v1/reports/tasks');
+        $response2 = $this->getJson('/api/v1/reports/tasks');
+        $response3 = $this->getJson('/api/v1/reports/tasks');
+
+        $response1->assertSuccessful();
+        $response2->assertSuccessful();
+        $response3->assertSuccessful();
+
+        // All responses should have the same data
+        $this->assertEquals(
+            $response1->json('total_tasks'),
+            $response2->json('total_tasks')
+        );
+
+        $this->assertEquals(
+            $response2->json('total_tasks'),
+            $response3->json('total_tasks')
+        );
     }
 }
