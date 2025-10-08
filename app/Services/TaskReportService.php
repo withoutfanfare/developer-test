@@ -72,6 +72,10 @@ class TaskReportService
         return [
             'report' => $report,
             'total_tasks' => count($report),
+            'category_stats' => $categoryStats,
+            'user_stats' => $userStats,
+            'priority_distribution' => $priorityDistribution,
+            'status_distribution' => $statusDistribution,
             'date_range' => [
                 'start' => $startDate->format('Y-m-d'),
                 'end' => $endDate->format('Y-m-d'),
@@ -96,7 +100,7 @@ class TaskReportService
         array $priorityDistribution,
         array $statusDistribution
     ): array {
-        return $tasks->map(function ($task) use ($categoryStats, $userStats, $priorityDistribution, $statusDistribution) {
+        return $tasks->map(function ($task) use ($categoryStats, $userStats) {
             $userId = $task->user_id;
             $category = $task->category;
 
@@ -125,8 +129,6 @@ class TaskReportService
                 'user_completed_tasks' => $userStats[$userId]['completed_tasks'] ?? 0,
                 'user_completion_rate' => $userStats[$userId]['completion_rate'] ?? 0,
                 'average_time_for_category' => $categoryStats[$category]['avg_hours'] ?? 0,
-                'priority_distribution' => $priorityDistribution,
-                'status_distribution' => $statusDistribution,
                 'metadata' => $task->metadata ?? [],
             ];
         })->values()->all();

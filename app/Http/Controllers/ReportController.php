@@ -40,13 +40,13 @@ class ReportController extends Controller
         $cacheKey = "task_report:{$startDate->format('Y-m-d')}:{$endDate->format('Y-m-d')}:{$userFilter}";
 
         try {
-            // Wrap report generation in cache
-            $reportData = Cache::tags(['task_reports'])->remember($cacheKey, 3600, function () use ($startDate, $endDate, $userFilter) {
+            // Wrap report generation in cache (1 hour TTL)
+            $reportData = Cache::remember($cacheKey, 3600, function () use ($startDate, $endDate, $userFilter) {
                 return $this->reportService->generateReport($startDate, $endDate, $userFilter);
             });
 
             // Mark if response came from cache
-            $reportData['cached'] = Cache::tags(['task_reports'])->has($cacheKey);
+            $reportData['cached'] = Cache::has($cacheKey);
 
             // Log successful generation
             \Log::info('Task report generated successfully', [
