@@ -39,12 +39,14 @@ class TaskRepository implements TaskRepositoryInterface
             ->groupBy('category')
             ->get()
             ->keyBy('category')
-            ->map(function ($stat) {
-                return [
-                    'count' => $stat->count,
-                    'avg_hours' => round($stat->avg_hours ?? 0, 2),
-                ];
-            })
+            ->map(
+                function ($stat) {
+                    return [
+                        'count' => $stat->count,
+                        'avg_hours' => round($stat->avg_hours ?? 0, 2),
+                    ];
+                }
+            )
             ->all();
 
         return $stats;
@@ -62,17 +64,19 @@ class TaskRepository implements TaskRepositoryInterface
             ->groupBy('user_id')
             ->get()
             ->keyBy('user_id')
-            ->map(function ($stat) {
-                $completionRate = $stat->total_tasks > 0
-                    ? round(($stat->completed_tasks / $stat->total_tasks) * 100, 2)
-                    : 0;
+            ->map(
+                function ($stat) {
+                    $completionRate = $stat->total_tasks > 0
+                        ? round(($stat->completed_tasks / $stat->total_tasks) * 100, 2)
+                        : 0;
 
-                return [
-                    'total_tasks' => $stat->total_tasks,
-                    'completed_tasks' => $stat->completed_tasks,
-                    'completion_rate' => $completionRate,
-                ];
-            })
+                    return [
+                        'total_tasks' => $stat->total_tasks,
+                        'completed_tasks' => $stat->completed_tasks,
+                        'completion_rate' => $completionRate,
+                    ];
+                }
+            )
             ->all();
 
         return $stats;
