@@ -122,13 +122,14 @@ class TaskReportService
                 'assigned_to_email' => $task->assignedTo->email ?? null,
                 'comment_count' => $task->comments->count(),
                 'total_comment_length' => $task->comments->sum(function ($comment) {
-                    return strlen($comment->content ?? '');
+                    return strlen($comment->comment ?? '');
                 }),
-                'category_tasks_count' => $categoryStats[$category]['count'] ?? 0,
+                // Handle null categories gracefully (use empty string as key for null categories)
+                'category_tasks_count' => isset($category) ? ($categoryStats[$category]['count'] ?? 0) : 0,
                 'user_total_tasks' => $userStats[$userId]['total_tasks'] ?? 0,
                 'user_completed_tasks' => $userStats[$userId]['completed_tasks'] ?? 0,
                 'user_completion_rate' => $userStats[$userId]['completion_rate'] ?? 0,
-                'average_time_for_category' => $categoryStats[$category]['avg_hours'] ?? 0,
+                'average_time_for_category' => isset($category) ? ($categoryStats[$category]['avg_hours'] ?? 0) : 0,
                 'metadata' => $task->metadata ?? [],
             ];
         })->values()->all();

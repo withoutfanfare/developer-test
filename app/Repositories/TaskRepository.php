@@ -18,8 +18,11 @@ class TaskRepository implements TaskRepositoryInterface
             ->inDateRange($start, $end);
 
         if ($userFilter) {
-            $query->whereHas('user', function ($q) use ($userFilter) {
-                $q->where('name', 'like', "%{$userFilter}%");
+            // Escape LIKE metacharacters (%, _) to prevent wildcard injection
+            $escapedFilter = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $userFilter);
+
+            $query->whereHas('user', function ($q) use ($escapedFilter) {
+                $q->where('name', 'like', "%{$escapedFilter}%");
             });
         }
 
@@ -66,6 +69,7 @@ class TaskRepository implements TaskRepositoryInterface
             ->keyBy('user_id')
             ->map(
                 function ($stat) {
+                    // Prevent division by zero when calculating completion rate
                     $completionRate = $stat->total_tasks > 0
                         ? round(($stat->completed_tasks / $stat->total_tasks) * 100, 2)
                         : 0;

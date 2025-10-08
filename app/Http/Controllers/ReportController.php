@@ -36,17 +36,21 @@ class ReportController extends Controller
             'ip' => $request->ip(),
         ]);
 
-        // Generate cache key from parameters
-        $cacheKey = "task_report:{$startDate->format('Y-m-d')}:{$endDate->format('Y-m-d')}:{$userFilter}";
+        // Generate cache key from parameters (including user ID for proper isolation)
+        $userId = $request->user()->id;
+        $cacheKey = "task_report:user_{$userId}:{$startDate->format('Y-m-d')}:{$endDate->format('Y-m-d')}:{$userFilter}";
 
         try {
+            // Check if response will come from cache before generating
+            $wasCached = Cache::has($cacheKey);
+
             // Wrap report generation in cache (1 hour TTL)
             $reportData = Cache::remember($cacheKey, 3600, function () use ($startDate, $endDate, $userFilter) {
                 return $this->reportService->generateReport($startDate, $endDate, $userFilter);
             });
 
-            // Mark if response came from cache
-            $reportData['cached'] = Cache::has($cacheKey);
+            // Mark if response came from cache (checked BEFORE Cache::remember)
+            $reportData['cached'] = $wasCached;
 
             // Log successful generation
             \Log::info('Task report generated successfully', [
