@@ -116,4 +116,24 @@ class TaskReportTest extends TestCase
         $this->assertLessThan(10000, $executionTime, "Report should complete in < 10 seconds, took {$executionTime}ms");
         $response->assertSuccessful();
     }
+
+    /**
+     * Test: Memory usage is tracked and included in response
+     */
+    public function test_memory_usage_tracked_in_response(): void
+    {
+        $response = $this->getJson('/api/v1/reports/tasks');
+
+        $response->assertSuccessful();
+        $response->assertJsonStructure([
+            'memory_used_mb',
+            'peak_memory_mb',
+            'execution_time_ms',
+        ]);
+
+        $data = $response->json();
+        $this->assertIsNumeric($data['memory_used_mb']);
+        $this->assertIsNumeric($data['peak_memory_mb']);
+        $this->assertGreaterThanOrEqual(0, $data['memory_used_mb']);
+    }
 }

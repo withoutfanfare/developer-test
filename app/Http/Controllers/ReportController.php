@@ -27,17 +27,47 @@ class ReportController extends Controller
 
         $userFilter = $validated['user_filter'] ?? null;
 
+        // Log incoming request
+        \Log::info('Task report requested', [
+            'user_id' => $request->user()?->id,
+            'start_date' => $startDate->format('Y-m-d'),
+            'end_date' => $endDate->format('Y-m-d'),
+            'user_filter' => $userFilter,
+            'ip' => $request->ip(),
+        ]);
+
         // Generate cache key from parameters
         $cacheKey = "task_report:{$startDate->format('Y-m-d')}:{$endDate->format('Y-m-d')}:{$userFilter}";
 
-        // Wrap report generation in cache
-        $reportData = Cache::tags(['task_reports'])->remember($cacheKey, 3600, function () use ($startDate, $endDate, $userFilter) {
-            return $this->reportService->generateReport($startDate, $endDate, $userFilter);
-        });
+        try {
+            // Wrap report generation in cache
+            $reportData = Cache::tags(['task_reports'])->remember($cacheKey, 3600, function () use ($startDate, $endDate, $userFilter) {
+                return $this->reportService->generateReport($startDate, $endDate, $userFilter);
+            });
 
-        // Mark if response came from cache
-        $reportData['cached'] = Cache::tags(['task_reports'])->has($cacheKey);
+            // Mark if response came from cache
+            $reportData['cached'] = Cache::tags(['task_reports'])->has($cacheKey);
 
-        return response()->json($reportData);
+            // Log successful generation
+            \Log::info('Task report generated successfully', [
+                'user_id' => $request->user()?->id,
+                'task_count' => $reportData['total_tasks'],
+                'cached' => $reportData['cached'],
+                'execution_time_ms' => $reportData['execution_time_ms'],
+            ]);
+
+            return response()->json($reportData);
+        } catch (\Exception $e) {
+            // Log errors with full context
+            \Log::error('Task report generation failed', [
+                'user_id' => $request->user()?->id,
+                'start_date' => $startDate->format('Y-m-d'),
+                'end_date' => $endDate->format('Y-m-d'),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            throw $e;
+        }
     }
 }

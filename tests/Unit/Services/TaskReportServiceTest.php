@@ -11,6 +11,7 @@ use Tests\TestCase;
 class TaskReportServiceTest extends TestCase
 {
     protected TaskRepositoryInterface $repository;
+
     protected TaskReportService $service;
 
     protected function setUp(): void
@@ -39,7 +40,7 @@ class TaskReportServiceTest extends TestCase
         $this->repository->shouldReceive('getTasksInDateRange')
             ->once()
             ->with($startDate, $endDate, null)
-            ->andReturn(new Collection());
+            ->andReturn(new Collection);
 
         $this->repository->shouldReceive('getCategoryStatistics')
             ->once()

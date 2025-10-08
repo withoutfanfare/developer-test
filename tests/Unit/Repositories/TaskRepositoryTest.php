@@ -18,7 +18,7 @@ class TaskRepositoryTest extends TestCase
     {
         parent::setUp();
 
-        $this->repository = new TaskRepository();
+        $this->repository = new TaskRepository;
     }
 
     /**

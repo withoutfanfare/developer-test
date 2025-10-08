@@ -18,6 +18,7 @@ class TaskReportService
     public function generateReport(Carbon $startDate, Carbon $endDate, ?string $userFilter): array
     {
         $startTime = microtime(true);
+        $startMemory = memory_get_usage(true);
 
         // Get data from repository
         $tasks = $this->repository->getTasksInDateRange($startDate, $endDate, $userFilter);
@@ -36,6 +37,19 @@ class TaskReportService
         );
 
         $executionTime = round((microtime(true) - $startTime) * 1000, 2);
+        $endMemory = memory_get_usage(true);
+        $memoryUsed = round(($endMemory - $startMemory) / 1024 / 1024, 2); // Convert to MB
+        $peakMemory = round(memory_get_peak_usage(true) / 1024 / 1024, 2); // Peak memory in MB
+
+        // Log slow queries (>1s) as warnings
+        if ($executionTime > 1000) {
+            \Log::warning('Slow report generation detected', [
+                'execution_time_ms' => $executionTime,
+                'memory_used_mb' => $memoryUsed,
+                'task_count' => count($report),
+                'date_range' => "{$startDate->format('Y-m-d')} to {$endDate->format('Y-m-d')}",
+            ]);
+        }
 
         return [
             'report' => $report,
@@ -48,6 +62,8 @@ class TaskReportService
             'generated_at' => now()->toIso8601String(),
             'cached' => false,
             'execution_time_ms' => $executionTime,
+            'memory_used_mb' => $memoryUsed,
+            'peak_memory_mb' => $peakMemory,
             'query_count' => '<100 (optimized)',
         ];
     }
