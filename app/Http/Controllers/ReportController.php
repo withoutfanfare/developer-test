@@ -2,21 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\TaskReportRequest;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\TaskComment;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 
 class ReportController extends Controller
 {
-    public function taskReport(Request $request)
+    public function taskReport(TaskReportRequest $request)
     {
-        $startDate = $request->get('start_date', now()->subMonth()->format('Y-m-d'));
-        $endDate = $request->get('end_date', now()->format('Y-m-d'));
+        $validated = $request->validated();
 
-        $userFilter = $request->get('user_filter', '');
+        $startDate = $validated['start_date'] ?? now()->subMonth()->format('Y-m-d');
+        $endDate = $validated['end_date'] ?? now()->format('Y-m-d');
+
+        $userFilter = $validated['user_filter'] ?? '';
         if ($userFilter) {
             $filteredUsers = User::where('name', 'like', "%{$userFilter}%")->get();
         }
