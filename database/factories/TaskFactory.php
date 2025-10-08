@@ -20,7 +20,7 @@ class TaskFactory extends Factory
         $categories = ['Development', 'Design', 'Testing', 'Documentation', 'Bug Fix', 'Research', 'Meeting', 'Review'];
         $statuses = ['pending', 'in_progress', 'completed', 'cancelled'];
         $priorities = ['low', 'medium', 'high', 'urgent'];
-        
+
         return [
             'title' => $this->faker->sentence(4),
             'description' => $this->faker->paragraph(3),

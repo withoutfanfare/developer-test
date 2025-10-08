@@ -8,4 +8,6 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::get('/reports/tasks', [ReportController::class, 'taskReport']);
+Route::middleware(['auth:sanctum', 'throttle:60,1'])->prefix('v1')->group(function () {
+    Route::get('/reports/tasks', [ReportController::class, 'taskReport']);
+});
