@@ -61,7 +61,7 @@ class TaskReportValidationTest extends TestCase
     {
         $longFilter = str_repeat('a', 256);
 
-        $response = $this->getJson('/api/v1/reports/tasks?user_filter=' . $longFilter);
+        $response = $this->getJson('/api/v1/reports/tasks?user_filter='.$longFilter);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors('user_filter');

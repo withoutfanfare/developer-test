@@ -23,9 +23,9 @@ class TaskCommentFactory extends Factory
             'user_id' => User::factory(),
             'comment' => $this->faker->paragraph($this->faker->numberBetween(1, 4)),
             'attachments' => $this->faker->optional(0.2)->randomElements([
-                ['filename' => $this->faker->word . '.pdf', 'size' => $this->faker->numberBetween(1000, 50000)],
-                ['filename' => $this->faker->word . '.png', 'size' => $this->faker->numberBetween(5000, 200000)],
-                ['filename' => $this->faker->word . '.docx', 'size' => $this->faker->numberBetween(2000, 100000)],
+                ['filename' => $this->faker->word.'.pdf', 'size' => $this->faker->numberBetween(1000, 50000)],
+                ['filename' => $this->faker->word.'.png', 'size' => $this->faker->numberBetween(5000, 200000)],
+                ['filename' => $this->faker->word.'.docx', 'size' => $this->faker->numberBetween(2000, 100000)],
             ], $this->faker->numberBetween(1, 2), false),
             'created_at' => $this->faker->dateTimeBetween('-3 months', 'now'),
         ];

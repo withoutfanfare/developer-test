@@ -29,7 +29,7 @@ class TaskReportTest extends TestCase
     {
         $maliciousPayload = "' OR '1'='1";
 
-        $response = $this->getJson('/api/v1/reports/tasks?user_filter=' . urlencode($maliciousPayload));
+        $response = $this->getJson('/api/v1/reports/tasks?user_filter='.urlencode($maliciousPayload));
 
         // Should return safe results, not execute SQL injection
         $response->assertSuccessful();
@@ -51,7 +51,7 @@ class TaskReportTest extends TestCase
         // Attempt table drop via SQL injection
         $maliciousPayload = "'; DROP TABLE {$tableName}; --";
 
-        $response = $this->getJson('/api/v1/reports/tasks?user_filter=' . urlencode($maliciousPayload));
+        $response = $this->getJson('/api/v1/reports/tasks?user_filter='.urlencode($maliciousPayload));
 
         // Table should still exist
         $this->assertTrue(
@@ -69,7 +69,7 @@ class TaskReportTest extends TestCase
     {
         $maliciousPayload = "'; DROP TABLE users; --";
 
-        $response = $this->getJson('/api/v1/reports/tasks?user_filter=' . urlencode($maliciousPayload));
+        $response = $this->getJson('/api/v1/reports/tasks?user_filter='.urlencode($maliciousPayload));
 
         // Response should be successful (not execute the SQL)
         $response->assertSuccessful();
@@ -85,5 +85,35 @@ class TaskReportTest extends TestCase
             'id' => $this->user->id,
             'email' => $this->user->email,
         ]);
+    }
+
+    /**
+     * Test: Query count < 100 for any report size
+     */
+    public function test_query_count_less_than_100(): void
+    {
+        DB::enableQueryLog();
+
+        $response = $this->getJson('/api/v1/reports/tasks');
+
+        $queryCount = count(DB::getQueryLog());
+
+        $this->assertLessThan(100, $queryCount, "Query count should be less than 100, got {$queryCount}");
+        $response->assertSuccessful();
+    }
+
+    /**
+     * Test: Report completes in reasonable time (< 10 seconds for test data)
+     */
+    public function test_report_completes_in_reasonable_time(): void
+    {
+        $startTime = microtime(true);
+
+        $response = $this->getJson('/api/v1/reports/tasks');
+
+        $executionTime = (microtime(true) - $startTime) * 1000; // Convert to milliseconds
+
+        $this->assertLessThan(10000, $executionTime, "Report should complete in < 10 seconds, took {$executionTime}ms");
+        $response->assertSuccessful();
     }
 }

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class TaskComment extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'task_id',
         'user_id',
